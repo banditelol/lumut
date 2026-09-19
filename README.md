@@ -13,7 +13,7 @@ heights.
   <br>
   <strong>exp_data_editor</strong><br>
   <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/exp_data_editor.py/wasm?utm_source=lumut">molab</a> ·
-  <a href="https://banditelol.github.io/lumut/reference/exp-data-editor/">API</a> ·
+  <a href="https://adityarp.com/lumut/reference/exp-data-editor/">API</a> ·
   <a href="docs/reference/exp-data-editor.md">Markdown</a>
 </div>
 
@@ -24,7 +24,7 @@ heights.
   <br>
   <strong>data_editor_enchance</strong> (Glide rough resize experiment)<br>
   <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">molab</a> ·
-  <a href="https://banditelol.github.io/lumut/reference/data-editor-enchance/">API</a> ·
+  <a href="https://adityarp.com/lumut/reference/data-editor-enchance/">API</a> ·
   <a href="docs/reference/data-editor-enchance.md">Markdown</a>
 </div>
 

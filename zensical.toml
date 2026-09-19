@@ -1,7 +1,7 @@
 [project]
 site_name = "lumut"
 site_description = "Experimental AnyWidget data editor for notebooks"
-site_url = "https://banditelol.github.io/lumut/"
+site_url = "https://adityarp.com/lumut/"
 repo_url = "https://github.com/banditelol/lumut"
 repo_name = "banditelol/lumut"
 docs_dir = "docs"
