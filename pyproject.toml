@@ -4,9 +4,25 @@ version = "0.1.0"
 description = "Experimental AnyWidget data editor for notebook environments"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "lumut contributors" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: User Interfaces",
+]
+keywords = ["anywidget", "data-editor", "jupyter", "marimo", "notebook"]
 dependencies = ["anywidget>=0.11.0", "traitlets>=5.14.0"]
+
+[project.urls]
+Homepage = "https://github.com/banditelol/lumut"
+Repository = "https://github.com/banditelol/lumut"
+Issues = "https://github.com/banditelol/lumut/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]

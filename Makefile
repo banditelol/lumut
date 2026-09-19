@@ -1,4 +1,4 @@
-.PHONY: install build test docs docs-serve dev
+.PHONY: install build package test docs docs-serve dev
 
 install:
 	uv venv --allow-existing
@@ -8,8 +8,13 @@ install:
 build:
 	npm run build
 
+# Create the sdist and wheel that are uploaded to PyPI. The frontend bundle is
+# built first so Hatchling includes the current asset from lumut/static/.
+package: build
+	uv build
+
 test:
-	uv run pytest
+	uv run --extra test pytest
 
 docs:
 	uv run --extra docs zensical build --clean

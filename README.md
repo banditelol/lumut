@@ -75,6 +75,15 @@ References:
 
 ## Install and use
 
+Install the published package with:
+
+```bash
+uv pip install lumut
+```
+
+For local development, build the JavaScript bundle before using the editable
+package:
+
 ```bash
 uv pip install -e .
 npm install
@@ -161,3 +170,15 @@ make dev
 
 To inspect the widget in marimo after installing the package locally, run
 `uv run --with marimo marimo edit demos/exp_data_editor.py`.
+
+## Releasing to PyPI
+
+Releases use GitHub Actions and [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/), so a PyPI API token is not stored in this repository.
+
+One-time setup:
+
+1. If `lumut` is not yet on PyPI, add a **pending** Trusted Publisher in your PyPI account settings. If it already exists, add a Trusted Publisher in that project's Publishing settings. In both cases use project name `lumut`, owner `banditelol`, repository `lumut`, workflow file `publish.yml`, and environment `pypi`.
+2. The first successful run of a pending publisher creates the PyPI project; its configured project name must exactly match `project.name`.
+3. In GitHub, create the protected `pypi` environment if you want approvals before publication. The workflow works without protection too.
+
+For each release, update `version` in `pyproject.toml`, add release notes, and create a GitHub release whose tag is `v<version>` (for example, `v0.1.0`). The publishing workflow rebuilds the frontend, builds and checks the wheel and source distribution, then uploads those exact artifacts to PyPI. To verify a build locally before creating the release, run `make package` and `uvx twine check dist/*`.
