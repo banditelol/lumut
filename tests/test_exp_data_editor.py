@@ -1,6 +1,11 @@
 import pytest
 
-from lumut import ExpDataEditor, exp_data_editor
+from lumut import (
+    DataEditorEnchance,
+    ExpDataEditor,
+    data_editor_enchance,
+    exp_data_editor,
+)
 
 
 def test_row_oriented_data_syncs_as_value() -> None:
@@ -38,3 +43,17 @@ def test_invalid_configuration_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="at least"):
         ExpDataEditor([{"name": "Ada"}], max_row_height=20)
+
+
+def test_glide_rough_editor_uses_the_same_eager_data_contract() -> None:
+    widget = data_editor_enchance(
+        {"name": ["Ada"], "notes": ["Wrapped"]},
+        editable_columns=["notes"],
+        wrapped_columns=["notes"],
+    )
+
+    assert isinstance(widget, DataEditorEnchance)
+    assert widget.data == [{"name": "Ada", "notes": "Wrapped"}]
+    assert widget.value == [{"name": "Ada", "notes": "Wrapped"}]
+    assert widget.wrapped_columns == ["notes"]
+    assert widget.wrapped_row_height_strategy == "approxIncrementalRough"

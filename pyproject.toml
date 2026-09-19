@@ -10,6 +10,7 @@ dependencies = ["anywidget>=0.11.0", "traitlets>=5.14.0"]
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
+docs = ["zensical>=0.0.38", "mkdocstrings[python]>=0.25.1"]
 
 [build-system]
 requires = ["hatchling"]
@@ -21,4 +22,3 @@ artifacts = ["lumut/static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

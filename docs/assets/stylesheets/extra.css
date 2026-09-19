@@ -1,0 +1,8 @@
+.widget-gallery { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.gallery-item { border: 1px solid var(--md-default-fg-color--lighter, #d0d7de); border-radius: .75rem; overflow: hidden; }
+.gallery-title { font-weight: 700; padding: .75rem .9rem .45rem; }
+.gallery-img { display: block; background: #f7f9fb; }
+.gallery-img img { display: block; width: 100%; }
+.gallery-links { display: flex; gap: .75rem; padding: .55rem .9rem .8rem; }
+.gallery-links a, .api-links a { font-size: .85rem; font-weight: 600; }
+.api-links { margin-bottom: 1rem; }

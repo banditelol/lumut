@@ -4,6 +4,33 @@ An experimental, MIT-licensed AnyWidget data editor for notebook runtimes. It
 uses TanStack Table for table state and TanStack Virtual for lazy, measured row
 heights.
 
+## Gallery
+
+<div align="center">
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/exp_data_editor.py/wasm?utm_source=lumut">
+    <img src="docs/assets/gallery/exp-data-editor.svg" alt="The exp_data_editor showing wrapped text rows" width="640">
+  </a>
+  <br>
+  <strong>exp_data_editor</strong><br>
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/exp_data_editor.py/wasm?utm_source=lumut">molab</a> ·
+  <a href="https://banditelol.github.io/lumut/reference/exp-data-editor/">API</a> ·
+  <a href="docs/reference/exp-data-editor.md">Markdown</a>
+</div>
+
+<div align="center">
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">
+    <img src="docs/assets/gallery/data-editor-enchance.svg" alt="The data_editor_enchance Glide editor showing wrapped text rows" width="640">
+  </a>
+  <br>
+  <strong>data_editor_enchance</strong> (Glide rough resize experiment)<br>
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">molab</a> ·
+  <a href="https://banditelol.github.io/lumut/reference/data-editor-enchance/">API</a> ·
+  <a href="docs/reference/data-editor-enchance.md">Markdown</a>
+</div>
+
+The preview is an illustration of the widget. The MoLab demo runs the actual
+AnyWidget from this repository.
+
 ## Why it exists
 
 `lumut.exp_data_editor` explores a small, marimo-compatible data-editor
@@ -72,6 +99,38 @@ editor
 ```
 
 `editor.value` is the edited list of row dictionaries.
+
+## Glide rough resize experiment
+
+`data_editor_enchance` intentionally retains the spelling in its public name.
+It is a Glide Data Grid implementation of the same small input/value contract
+as `exp_data_editor` and `mo.ui.data_editor`, with `wrapped_columns` added.
+During a wrapped-column resize it estimates a single capped row height from the
+visible row window plus a 20-row buffer. On pointer release it applies that
+sampled height to all rows. This avoids an O(N) measurement pass while dragging
+but is an approximation, not content-fit auto-height: off-screen rows can be
+over- or under-sized.
+
+It deliberately pins the browser bundle to React 18: Glide 6.0.3 declares
+React 16–18 peer support, whereas the TanStack-only editor has no such Glide
+constraint.
+
+Use this only for experimentation with eager small-to-medium data. Glide's
+variable `rowHeight` callback still makes its scroll geometry a poor fit for a
+million-row exact-auto-height editor. For a measured, bounded-height design,
+use `exp_data_editor` and continue the planned windowed-data work in
+[issue #1](https://github.com/banditelol/lumut/issues/1).
+
+```python
+from lumut import data_editor_enchance
+
+glide_editor = data_editor_enchance(
+    [{"notes": "Resize the notes column to try rough wrapping."}],
+    editable_columns=["notes"],
+    wrapped_columns=["notes"],
+    max_row_height=160,
+)
+```
 
 ## Scope
 

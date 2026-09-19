@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Glide rough resize data editor preview">
+  <rect width="1280" height="640" fill="#f8fafc"/>
+  <rect x="80" y="70" width="1120" height="500" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+  <rect x="80" y="70" width="1120" height="64" rx="16" fill="#ecfeff"/>
+  <text x="118" y="110" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#0f172a">Glide rough wrap sizing</text>
+  <rect x="80" y="134" width="1120" height="58" fill="#f1f5f9"/>
+  <text x="118" y="170" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#475569">#</text><text x="190" y="170" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#475569">NAME</text><text x="485" y="170" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#475569">NOTES  ↔</text><text x="1030" y="170" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#475569">ACTIVE</text>
+  <path d="M450 135V540" stroke="#06b6d4" stroke-width="5" stroke-dasharray="10 8"/>
+  <g font-family="system-ui, sans-serif" font-size="20" fill="#1e293b"><text x="118" y="236">1</text><text x="190" y="236">Ada Lovelace</text><text x="485" y="222">Visible rows are sampled while the column is resized.</text><text x="485" y="250">The maximum is capped and reused after release.</text><text x="1080" y="236">✓</text><text x="118" y="334">2</text><text x="190" y="334">Grace Hopper</text><text x="485" y="320">This deliberately trades exact fit for responsive</text><text x="485" y="348">resizing on eager, small-to-medium data.</text><text x="1080" y="334">□</text><text x="118" y="430">3</text><text x="190" y="430">Katherine Johnson</text><text x="485" y="416">Rows outside the sampled window can be imperfect.</text><text x="1080" y="430">✓</text></g>
+  <path d="M98 272H1182M98 370H1182M98 466H1182" stroke="#e2e8f0" stroke-width="2"/>
+  <rect x="1030" y="505" width="130" height="34" rx="17" fill="#cffafe"/><text x="1050" y="528" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#155e75">APPROXIMATE</text>
+</svg>

@@ -2,16 +2,18 @@
   "name": "lumut",
   "private": true,
   "scripts": {
-    "build": "npm run build:exp-data-editor",
+    "build": "npm run build:exp-data-editor && npm run build:data-editor-enchance",
     "build:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx",
-    "dev:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx"
+    "dev:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx",
+    "build:data-editor-enchance": "esbuild js/data-editor-enchance/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/data-editor-enchance.js --loader:.jsx=jsx",
+    "dev:data-editor-enchance": "esbuild js/data-editor-enchance/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/data-editor-enchance.js --loader:.jsx=jsx"
   },
   "dependencies": {
+    "@glideapps/glide-data-grid": "^6.0.3",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "esbuild": "^0.25.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }
-

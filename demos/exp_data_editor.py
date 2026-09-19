@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["anywidget>=0.11", "marimo>=0.23", "lumut"]
+# dependencies = ["anywidget>=0.11", "marimo>=0.23", "lumut @ git+https://github.com/banditelol/lumut.git"]
 # ///
 
 import marimo
