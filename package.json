@@ -1,0 +1,17 @@
+{
+  "name": "lumut",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:exp-data-editor",
+    "build:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx",
+    "dev:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.12",
+    "esbuild": "^0.25.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+
