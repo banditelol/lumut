@@ -1,8 +1,11 @@
 # lumut
 
-An experimental, MIT-licensed AnyWidget data editor for notebook runtimes. It
-uses TanStack Table for table state and TanStack Virtual for lazy, measured row
-heights.
+Lumut—*moss* in Indonesian—is an MIT-licensed collection of marimo-focused
+AnyWidgets and an experimental ground for creating new notebook widgets. It is
+heavily inspired by [wigglystuff](https://github.com/koaning/wigglystuff):
+small Python APIs, self-contained frontend bundles, and practical notebook
+demos. The first widgets explore data editing; future experiments do not need
+to be tables.
 
 ## Gallery
 
@@ -31,7 +34,12 @@ heights.
 The preview is an illustration of the widget. The MoLab demo runs the actual
 AnyWidget from this repository.
 
-## Why it exists
+## Current experiments
+
+The current collection contains two data-editor experiments. They are useful
+testbeds for marimo integration, interaction design, and AnyWidget packaging;
+they are not intended to replace marimo's production `ui.data_editor` for
+large datasets.
 
 Both editors accept the documented `marimo.ui.data_editor` inputs: eager
 Pandas-, Polars-, or PyArrow-style dataframes, a list of scalars (shown in a
@@ -156,8 +164,9 @@ selection, fill handles, search, or server/windowed data.
 
 ## Project conventions
 
-The project follows the useful parts of [wigglystuff](https://github.com/koaning/wigglystuff): a Python AnyWidget class, a bundled JavaScript entry point,
-static assets packaged by Hatchling, a `Makefile`, and focused Python tests.
+The project follows wigglystuff's useful conventions: a small Python AnyWidget
+class per experiment, a bundled JavaScript entry point, static assets packaged
+by Hatchling, a `Makefile`, and focused Python tests.
 
 `AGENTS.md` is the Codex-native replacement for wigglystuff's Claude-facing
 instructions. `.codex/workflows.md` records the equivalent development

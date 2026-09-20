@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#   "lumut>=0.1.0",
+#   "lumut>=0.1.1",
 #   "marimo",
 # ]
 # ///

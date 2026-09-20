@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["anywidget>=0.11", "marimo>=0.23", "lumut>=0.1.0"]
+# dependencies = ["anywidget>=0.11", "marimo>=0.23", "lumut>=0.1.1"]
 # ///
 
 import marimo

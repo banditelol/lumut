@@ -1,7 +1,7 @@
 [project]
 name = "lumut"
-version = "0.1.0"
-description = "Experimental AnyWidget data editor for notebook environments"
+version = "0.1.1"
+description = "Marimo-focused AnyWidget experiments for notebook interfaces"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }

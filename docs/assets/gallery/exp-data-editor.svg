@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
   <title id="title">exp_data_editor gallery preview</title>
-  <desc id="desc">A data editor with resized columns and two wrapped rows.</desc>
+  <desc id="desc">A marimo-focused experimental data editor with selection, an edit overlay, and a frozen new row.</desc>
   <rect width="960" height="540" fill="#f8fafc"/>
   <rect x="70" y="58" width="820" height="424" rx="14" fill="#ffffff" stroke="#d7dce3" stroke-width="2"/>
-  <text x="102" y="101" fill="#1f2937" font-family="Arial, sans-serif" font-size="20" font-weight="700">Experimental data editor</text>
+  <text x="102" y="101" fill="#1f2937" font-family="Arial, sans-serif" font-size="20" font-weight="700">Lumut · experimental data editor</text>
   <line x1="70" y1="124" x2="890" y2="124" stroke="#d7dce3" stroke-width="2"/>
   <rect x="72" y="125" width="816" height="46" fill="#f1f5f9"/>
   <text x="102" y="153" fill="#64748b" font-family="Arial, sans-serif" font-size="13" font-weight="700">NAME</text>
   <text x="302" y="153" fill="#64748b" font-family="Arial, sans-serif" font-size="13" font-weight="700">ROLE</text>
-  <text x="514" y="153" fill="#64748b" font-family="Arial, sans-serif" font-size="13" font-weight="700">NOTES</text>
+  <text x="514" y="153" fill="#64748b" font-family="Arial, sans-serif" font-size="13" font-weight="700">NOTES  ▾</text>
   <line x1="274" y1="125" x2="274" y2="450" stroke="#d7dce3"/>
   <line x1="486" y1="125" x2="486" y2="450" stroke="#d7dce3"/>
   <line x1="70" y1="171" x2="890" y2="171" stroke="#d7dce3"/>
@@ -21,6 +21,11 @@
   <text x="302" y="280" fill="#1f2937" font-family="Arial, sans-serif" font-size="16">Computer scientist</text>
   <text x="514" y="271" fill="#1f2937" font-family="Arial, sans-serif" font-size="15">Rows stop growing at max_row_height,</text>
   <text x="514" y="293" fill="#1f2937" font-family="Arial, sans-serif" font-size="15">keeping scrolling predictable.</text>
-  <rect x="481" y="126" width="6" height="324" rx="3" fill="#14b8a6" opacity=".9"/>
+  <rect x="481" y="126" width="6" height="324" rx="3" fill="#6366f1" opacity=".9"/>
   <rect x="872" y="185" width="6" height="148" rx="3" fill="#cbd5e1"/>
+  <rect x="486" y="252" width="388" height="82" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="2"/>
+  <text x="502" y="280" fill="#1f2937" font-family="Arial, sans-serif" font-size="15">Edit overlay: full text stays out of table layout.</text>
+  <text x="502" y="306" fill="#64748b" font-family="Arial, sans-serif" font-size="14">Enter saves · Shift+Enter inserts a line break</text>
+  <rect x="72" y="418" width="816" height="32" fill="#f8fafc" stroke="#d7dce3"/>
+  <text x="102" y="440" fill="#64748b" font-family="Arial, sans-serif" font-size="14" font-weight="700">＋ New row</text>
 </svg>

@@ -6,11 +6,14 @@ hide:
 
 # Lumut
 
-> An experimental AnyWidget data editor for notebook environments.
+> *Lumut*—moss in Indonesian—is a marimo-focused AnyWidget collection and an
+> experimental ground for new notebook widgets, heavily inspired by
+> [wigglystuff](https://github.com/koaning/wigglystuff).
 
-`exp_data_editor` is deliberately narrow: typed cell editing, a Python value
-bridge, column resize, and lazily measured row heights. It is an experiment in
-the data-editor surface marimo needs, rather than a spreadsheet clone.
+The current experiments focus on data editing, but Lumut is intentionally
+broader than one widget. `exp_data_editor` is a deliberately narrow testbed
+for typed editing, a Python value bridge, column resize, lazy row measurement,
+and spreadsheet-like interactions in marimo.
 
 ## Install
 
