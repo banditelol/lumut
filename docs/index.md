@@ -27,9 +27,9 @@ uv pip install "lumut @ git+https://github.com/banditelol/lumut.git"
     <div class="gallery-links"><a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/exp_data_editor.py/wasm?utm_source=lumut">molab</a><a href="reference/exp-data-editor/">API</a><a href="reference/exp-data-editor.md">MD</a></div>
   </div>
   <div class="gallery-item">
-    <div class="gallery-title"><a href="reference/data-editor-enchance/">data_editor_enchance</a></div>
-    <a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut" class="gallery-img"><img src="assets/gallery/data-editor-enchance.svg" alt="Glide data editor with wrapped rows"></a>
-    <div class="gallery-links"><a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">molab</a><a href="reference/data-editor-enchance/">API</a><a href="reference/data-editor-enchance.md">MD</a></div>
+    <div class="gallery-title"><a href="reference/data-editor-enhance/">data_editor_enhance</a></div>
+    <a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enhance.py/wasm?utm_source=lumut" class="gallery-img"><img src="assets/gallery/data-editor-enhance.svg" alt="Glide data editor with wrapped rows"></a>
+    <div class="gallery-links"><a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enhance.py/wasm?utm_source=lumut">molab</a><a href="reference/data-editor-enhance/">API</a><a href="reference/data-editor-enhance.md">MD</a></div>
   </div>
 </div>
 
@@ -41,7 +41,7 @@ the effect of exceptionally long content. See the [API reference](reference/exp-
 for the Python contract and [issue #1](https://github.com/banditelol/lumut/issues/1)
 for the planned windowed-data architecture.
 
-`data_editor_enchance` is a separate Glide experiment. It samples the visible
+`data_editor_enhance` is a separate Glide experiment. It samples the visible
 window during wrapped-column resize and applies the capped sampled height
 globally after release. That keeps resize work bounded, but it is deliberately
 approximate and is not suitable for million-row exact auto-height.

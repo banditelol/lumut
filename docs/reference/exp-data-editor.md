@@ -9,6 +9,11 @@ description: An AnyWidget data editor with TanStack-powered virtual rows and cap
 `marimo.ui.data_editor`: supply tabular data, decide which columns are editable,
 and read the edited rows from the widget value.
 
+It accepts marimo's documented eager-data forms: dataframe-like inputs,
+scalars (shown in a `value` column), records, and mappings of columns. It also
+accepts `label`, `on_change`, `column_sizing_mode`, `pagination`, and
+`page_size`; values are synchronized as row dictionaries for AnyWidget.
+
 <div class="api-links"><a target="_blank" href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/exp_data_editor.py/wasm?utm_source=lumut">Run the MoLab demo</a></div>
 
 ```python
@@ -18,12 +23,18 @@ from lumut import exp_data_editor
 editor = mo.ui.anywidget(exp_data_editor(
     [{"name": "Ada", "notes": "Text can wrap over multiple lines."}],
     editable_columns=["notes"],
+    wrapped_columns=["notes"],
+    wrap_text=True,
+    auto_row_height=True,
     max_row_height=160,
 ))
 
 editor
 ```
 
-The marimo wrapper exposes the edited rows as `editor.value`.
+The marimo wrapper exposes the edited rows as `editor.value`. Set `wrap_text=False`
+to truncate text in every column, or `auto_row_height=False` to keep every row at
+`estimated_row_height`; `wrapped_columns` selects which columns may wrap when
+wrapping is enabled.
 
 ::: lumut.exp_data_editor.ExpDataEditor

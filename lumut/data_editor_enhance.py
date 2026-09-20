@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import anywidget
 import traitlets
 
 from .exp_data_editor import (
     EditableColumns,
+    ColumnSizingMode,
     Row,
     WrappedColumns,
     _column_names,
@@ -20,7 +21,7 @@ from .exp_data_editor import (
 )
 
 
-class DataEditorEnchance(anywidget.AnyWidget):
+class DataEditorEnhance(anywidget.AnyWidget):
     """Edit tabular data with Glide Data Grid and approximate wrapped heights.
 
     This is deliberately separate from :class:`lumut.ExpDataEditor`. It carries
@@ -35,7 +36,7 @@ class DataEditorEnchance(anywidget.AnyWidget):
     so this widget is for experimentation and small-to-medium eager data only.
     """
 
-    _esm = Path(__file__).parent / "static" / "data-editor-enchance.js"
+    _esm = Path(__file__).parent / "static" / "data-editor-enhance.js"
 
     data = traitlets.List(traitlets.Dict(), default_value=[]).tag(sync=True)
     value = traitlets.List(traitlets.Dict(), default_value=[]).tag(sync=True)
@@ -50,16 +51,23 @@ class DataEditorEnchance(anywidget.AnyWidget):
     wrapped_row_height_strategy = traitlets.Unicode(
         "approxIncrementalRough"
     ).tag(sync=True)
+    column_sizing_mode = traitlets.Any(None, allow_none=True).tag(sync=True)
+    pagination = traitlets.Bool(False).tag(sync=True)
+    page_size = traitlets.Int(25).tag(sync=True)
 
     def __init__(
         self,
         data: Sequence[Mapping[str, Any]] | Mapping[str, Sequence[Any]] | Any,
         *,
         label: str = "",
+        on_change: Callable[[list[Row]], None] | None = None,
         editable_columns: EditableColumns = "all",
         wrapped_columns: WrappedColumns = (),
         max_row_height: int = 240,
         estimated_row_height: int = 34,
+        column_sizing_mode: ColumnSizingMode = None,
+        pagination: bool | None = None,
+        page_size: int | None = None,
         width: str = "100%",
         height: int = 450,
     ) -> None:
@@ -67,6 +75,10 @@ class DataEditorEnchance(anywidget.AnyWidget):
             raise ValueError("max_row_height must be at least estimated_row_height")
         if height <= 0:
             raise ValueError("height must be positive")
+        if column_sizing_mode not in (None, "auto", "fit"):
+            raise ValueError("column_sizing_mode must be 'auto', 'fit', or None")
+        if page_size is not None and page_size <= 0:
+            raise ValueError("page_size must be positive")
 
         rows: list[Row] = _to_rows(data)
         columns = list(rows[0]) if rows else _column_names(data)
@@ -88,13 +100,23 @@ class DataEditorEnchance(anywidget.AnyWidget):
             height=height,
             max_row_height=max_row_height,
             estimated_row_height=estimated_row_height,
+            column_sizing_mode=column_sizing_mode,
+            pagination=bool(pagination),
+            page_size=page_size or 25,
         )
+        self._on_change = on_change
+        if on_change is not None:
+            self.observe(self._notify_change, names="value")
+
+    def _notify_change(self, change: dict[str, Any]) -> None:
+        if self._on_change is not None:
+            self._on_change(change["new"])
 
 
-def data_editor_enchance(
+def data_editor_enhance(
     data: Sequence[Mapping[str, Any]] | Mapping[str, Sequence[Any]] | Any,
     **kwargs: Any,
-) -> DataEditorEnchance:
-    """Create a :class:`DataEditorEnchance` (name retained intentionally)."""
+) -> DataEditorEnhance:
+    """Create a :class:`DataEditorEnhance`."""
 
-    return DataEditorEnchance(data, **kwargs)
+    return DataEditorEnhance(data, **kwargs)

@@ -1,29 +1,29 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#   "lumut @ git+https://github.com/banditelol/lumut.git",
+#   "lumut>=0.1.0",
 #   "marimo",
 # ]
 # ///
 
 import marimo
 
-from lumut import data_editor_enchance
-
+__generated_with = "0.23.0"
 app = marimo.App(width="medium")
 
 
 @app.cell
 def _():
     import marimo as mo
+    from lumut import data_editor_enhance
 
-    return (mo,)
+    return data_editor_enhance, mo
 
 
 @app.cell
-def _(mo):
+def _(data_editor_enhance, mo):
     editor = mo.ui.anywidget(
-        data_editor_enchance(
+        data_editor_enhance(
             [
                 {
                     "name": "Ada Lovelace",

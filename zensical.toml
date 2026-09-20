@@ -10,7 +10,7 @@ site_dir = "site"
 nav = [
     { Overview = "index.md" },
     { Reference = [
-        { "data_editor_enchance" = "reference/data-editor-enchance.md" },
+        { "data_editor_enhance" = "reference/data-editor-enhance.md" },
         { "exp_data_editor" = "reference/exp-data-editor.md" },
     ] },
 ]

@@ -2,11 +2,11 @@
   "name": "lumut",
   "private": true,
   "scripts": {
-    "build": "npm run build:exp-data-editor && npm run build:data-editor-enchance",
+    "build": "npm run build:exp-data-editor && npm run build:data-editor-enhance",
     "build:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx",
     "dev:exp-data-editor": "esbuild js/exp-data-editor/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/exp-data-editor.js --loader:.jsx=jsx",
-    "build:data-editor-enchance": "esbuild js/data-editor-enchance/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/data-editor-enchance.js --loader:.jsx=jsx",
-    "dev:data-editor-enchance": "esbuild js/data-editor-enchance/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/data-editor-enchance.js --loader:.jsx=jsx"
+    "build:data-editor-enhance": "esbuild js/data-editor-enhance/widget.jsx --bundle --format=esm --minify --outfile=lumut/static/data-editor-enhance.js --loader:.jsx=jsx --loader:.css=text",
+    "dev:data-editor-enhance": "esbuild js/data-editor-enhance/widget.jsx --bundle --format=esm --sourcemap --watch --outfile=lumut/static/data-editor-enhance.js --loader:.jsx=jsx --loader:.css=text"
   },
   "dependencies": {
     "@glideapps/glide-data-grid": "^6.0.3",

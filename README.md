@@ -18,14 +18,14 @@ heights.
 </div>
 
 <div align="center">
-  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">
-    <img src="docs/assets/gallery/data-editor-enchance.svg" alt="The data_editor_enchance Glide editor showing wrapped text rows" width="640">
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enhance.py/wasm?utm_source=lumut">
+    <img src="docs/assets/gallery/data-editor-enhance.svg" alt="The data_editor_enhance Glide editor showing wrapped text rows" width="640">
   </a>
   <br>
-  <strong>data_editor_enchance</strong> (Glide rough resize experiment)<br>
-  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enchance.py/wasm?utm_source=lumut">molab</a> ·
-  <a href="https://adityarp.com/lumut/reference/data-editor-enchance/">API</a> ·
-  <a href="docs/reference/data-editor-enchance.md">Markdown</a>
+  <strong>data_editor_enhance</strong> (Glide rough resize experiment)<br>
+  <a href="https://molab.marimo.io/github/banditelol/lumut/blob/main/demos/data_editor_enhance.py/wasm?utm_source=lumut">molab</a> ·
+  <a href="https://adityarp.com/lumut/reference/data-editor-enhance/">API</a> ·
+  <a href="docs/reference/data-editor-enhance.md">Markdown</a>
 </div>
 
 The preview is an illustration of the widget. The MoLab demo runs the actual
@@ -33,10 +33,12 @@ AnyWidget from this repository.
 
 ## Why it exists
 
-`lumut.exp_data_editor` explores a small, marimo-compatible data-editor
-contract without inheriting a grid library's entire feature surface. It accepts
-row-oriented data, column-oriented data, or pandas-like dataframes; honours
-`editable_columns`; and synchronizes fully edited rows as `value`.
+Both editors accept the documented `marimo.ui.data_editor` inputs: eager
+Pandas-, Polars-, or PyArrow-style dataframes, a list of scalars (shown in a
+`value` column), records, and column-oriented mappings. They support `label`,
+`on_change`, `editable_columns`, `column_sizing_mode`, `pagination`, and
+`page_size`; their edited value is normalized to a list of row dictionaries for
+the AnyWidget transport.
 
 Rows are measured only after they are rendered. Wrapped content can grow a row,
 but never beyond `max_row_height`. Resizing a column triggers a remeasurement
@@ -109,9 +111,13 @@ editor
 
 `editor.value` is the edited list of row dictionaries.
 
+`column_sizing_mode`, `pagination`, and `page_size` remain available for
+compatibility with marimo's documented API, even though marimo marks them
+deprecated.
+
 ## Glide rough resize experiment
 
-`data_editor_enchance` intentionally retains the spelling in its public name.
+`data_editor_enhance` is the Glide-based resize experiment.
 It is a Glide Data Grid implementation of the same small input/value contract
 as `exp_data_editor` and `mo.ui.data_editor`, with `wrapped_columns` added.
 During a wrapped-column resize it estimates a single capped row height from the
@@ -131,9 +137,9 @@ use `exp_data_editor` and continue the planned windowed-data work in
 [issue #1](https://github.com/banditelol/lumut/issues/1).
 
 ```python
-from lumut import data_editor_enchance
+from lumut import data_editor_enhance
 
-glide_editor = data_editor_enchance(
+glide_editor = data_editor_enhance(
     [{"notes": "Resize the notes column to try rough wrapping."}],
     editable_columns=["notes"],
     wrapped_columns=["notes"],
@@ -143,10 +149,10 @@ glide_editor = data_editor_enchance(
 
 ## Scope
 
-This first experiment intentionally includes typed cell editing, column resize,
-wrapped text, capped dynamic heights, and the AnyWidget value bridge. It does
-not yet implement spreadsheet range selection, fill handles, structural
-row/column operations, search, or server/windowed data.
+This first experiment includes typed cell editing, column resize, wrapped text,
+capped dynamic heights, column-name copying, adding columns on either side,
+and adding or deleting rows. It does not yet implement spreadsheet range
+selection, fill handles, search, or server/windowed data.
 
 ## Project conventions
 

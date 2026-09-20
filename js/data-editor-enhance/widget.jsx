@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import DataEditor, { GridCellKind } from "@glideapps/glide-data-grid";
+import DataEditor, { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
+import glideStyles from "@glideapps/glide-data-grid/dist/index.css";
 
 const DEFAULT_ROW_HEIGHT = 34;
-const DEFAULT_COLUMN_WIDTH = 200;
+const DEFAULT_COLUMN_WIDTH = 260;
 const WINDOW_BUFFER = 20;
 const CHAR_WIDTH = 7.2;
 const LINE_HEIGHT = 20;
@@ -41,6 +42,18 @@ function textHeight(value, width, maxHeight) {
   return Math.min(maxHeight, Math.max(DEFAULT_ROW_HEIGHT, Math.ceil(lines * LINE_HEIGHT + 14)));
 }
 
+function defaultWidth(title, index) {
+  if (title === "notes") return 600;
+  if (index === 0) return 350;
+  return DEFAULT_COLUMN_WIDTH;
+}
+
+function columnIcon(type) {
+  if (type === "boolean") return GridColumnIcon.HeaderBoolean;
+  if (type === "number" || type === "integer") return GridColumnIcon.HeaderNumber;
+  return GridColumnIcon.HeaderString;
+}
+
 function sampleHeight(rows, columns, wrappedColumns, widths, start, end, maxHeight) {
   let height = DEFAULT_ROW_HEIGHT;
   for (let row = start; row <= end; row += 1) {
@@ -61,40 +74,80 @@ function Editor({ model }) {
   const [rows, setRows] = useState(() => model.get("value") || model.get("data") || []);
   const [widths, setWidths] = useState({});
   const [roughHeights, setRoughHeights] = useState(null);
+  const [page, setPage] = useState(0);
   const editableColumns = model.get("editable_columns");
   const wrappedColumns = model.get("wrapped_columns");
   const fieldTypes = model.get("field_types") || {};
   const maxRowHeight = model.get("max_row_height");
+  const pagination = model.get("pagination");
+  const pageSize = model.get("page_size");
+  const columnSizingMode = model.get("column_sizing_mode");
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const pageOffset = pagination ? page * pageSize : 0;
+  const displayRows = pagination ? rows.slice(pageOffset, pageOffset + pageSize) : rows;
+
+  const theme = useMemo(() => ({
+    accentColor: "#2563eb",
+    accentFg: "#ffffff",
+    accentLight: "#dbeafe",
+    bgCell: "#ffffff",
+    bgCellMedium: "#fafafa",
+    bgHeader: "#f8f8fa",
+    bgHeaderHasFocus: "#f1f5f9",
+    bgHeaderHovered: "#f1f5f9",
+    borderColor: "#e4e4e7",
+    drilldownBorder: "#d4d4d8",
+    fontFamily: "ui-sans-serif, system-ui, sans-serif",
+    headerFontStyle: "600 14px ui-sans-serif, system-ui, sans-serif",
+    linkColor: "#2563eb",
+    textBubble: "#e4e4e7",
+    textDark: "#3f3f46",
+    textHeader: "#3f3f46",
+    textLight: "#a1a1aa",
+    textMedium: "#71717a",
+  }), []);
 
   useEffect(() => {
-    const sync = () => setRows(model.get("value") || model.get("data") || []);
+    const sync = () => {
+      setRows(model.get("data") || []);
+      setPage(0);
+    };
     model.on("change:data", sync);
     return () => model.off("change:data", sync);
   }, [model]);
 
-  const columns = useMemo(() => Object.keys(rows[0] || {}).map((title) => ({
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount - 1));
+  }, [pageCount]);
+
+  const columns = useMemo(() => Object.keys(rows[0] || {}).map((title, index) => ({
     id: title,
     title,
-    width: widths[title],
-    hasMenu: false,
+    width: widths[title] ?? (columnSizingMode === "auto"
+      ? Math.min(600, Math.max(120, 28 + Math.max(title.length, ...rows.slice(0, 100).map((row) => String(row[title] ?? "").length)) * 7.5))
+      : columnSizingMode === "fit" ? Math.max(120, Math.floor(800 / Math.max(1, Object.keys(rows[0] || {}).length)))
+        : defaultWidth(title, index)),
+    hasMenu: true,
+    icon: columnIcon(fieldTypes[title]),
+    overlayIcon: !isEditable(title, editableColumns) ? GridColumnIcon.ProtectedColumnOverlay : undefined,
     kind: fieldTypes[title] === "boolean" ? GridCellKind.Boolean : fieldTypes[title] === "number" || fieldTypes[title] === "integer" ? GridCellKind.Number : GridCellKind.Text,
-  })), [fieldTypes, rows, widths]);
+  })), [columnSizingMode, editableColumns, fieldTypes, rows, widths]);
 
   const commit = useCallback((cell, nextCell) => {
     const [columnIndex, rowIndex] = cell;
     const column = columns[columnIndex];
     if (!column || !isEditable(column.title, editableColumns)) return;
-    const nextRows = rows.map((row, index) => index === rowIndex
+    const nextRows = rows.map((row, index) => index === rowIndex + pageOffset
       ? { ...row, [column.title]: coerce(nextCell.data, fieldTypes[column.title]) }
       : row);
     setRows(nextRows);
     model.set("value", nextRows);
     model.save_changes();
-  }, [columns, editableColumns, fieldTypes, model, rows]);
+  }, [columns, editableColumns, fieldTypes, model, pageOffset, rows]);
 
   const getCellContent = useCallback(([columnIndex, rowIndex]) => {
     const column = columns[columnIndex];
-    const value = rows[rowIndex]?.[column.title];
+    const value = displayRows[rowIndex]?.[column.title];
     const editable = isEditable(column.title, editableColumns);
     if (column.kind === GridCellKind.Boolean) {
       return { kind: GridCellKind.Boolean, data: Boolean(value), allowOverlay: false, readonly: !editable };
@@ -110,7 +163,7 @@ function Editor({ model }) {
       allowWrapping: isWrapped(column.title, wrappedColumns),
       readonly: !editable,
     };
-  }, [columns, editableColumns, rows, wrappedColumns]);
+  }, [columns, displayRows, editableColumns, wrappedColumns]);
 
   const onColumnResize = useCallback((column, width) => {
     const nextWidths = { ...widths, [column.title]: width };
@@ -118,12 +171,12 @@ function Editor({ model }) {
     if (!isWrapped(column.title, wrappedColumns)) return;
     const { start, end } = visibleRowsRef.current;
     const sampleStart = Math.max(0, start - WINDOW_BUFFER);
-    const sampleEnd = Math.min(rows.length - 1, end + WINDOW_BUFFER);
-    const sampled = sampleHeight(rows, columns, wrappedColumns, nextWidths, sampleStart, sampleEnd, maxRowHeight);
+    const sampleEnd = Math.min(displayRows.length - 1, end + WINDOW_BUFFER);
+    const sampled = sampleHeight(displayRows, columns, wrappedColumns, nextWidths, sampleStart, sampleEnd, maxRowHeight);
     // The rough branch only changes a bounded window while the pointer moves.
     setRoughHeights({ mode: "window", start: sampleStart, end: sampleEnd, height: sampled });
     resizeRef.current = { height: sampled };
-  }, [columns, maxRowHeight, rows, widths, wrappedColumns]);
+  }, [columns, displayRows, maxRowHeight, widths, wrappedColumns]);
 
   useEffect(() => {
     const finishResize = () => {
@@ -142,12 +195,12 @@ function Editor({ model }) {
   }, []);
 
   const rowHeight = useCallback((row) => {
-    if (row >= rows.length || !roughHeights) return DEFAULT_ROW_HEIGHT;
+    if (row >= displayRows.length || !roughHeights) return DEFAULT_ROW_HEIGHT;
     if (roughHeights.mode === "all") return roughHeights.height;
     return row >= roughHeights.start && row <= roughHeights.end ? roughHeights.height : DEFAULT_ROW_HEIGHT;
-  }, [roughHeights, rows.length]);
+  }, [displayRows.length, roughHeights]);
 
-  return <div className="lumut-glide" style={{ width: model.get("width") }}>
+  return <div aria-label={model.get("label")} className="lumut-glide" style={{ width: model.get("width") }}>
     {model.get("label") && <div className="lumut-glide-label">{model.get("label")}</div>}
     <DataEditor
       ref={editorRef}
@@ -155,9 +208,14 @@ function Editor({ model }) {
       getCellContent={getCellContent}
       height={model.get("height")}
       width="100%"
-      rows={rows.length}
+      rows={displayRows.length}
       rowHeight={rowHeight}
-      rowMarkers={{ kind: "number" }}
+      headerHeight={56}
+      minColumnWidth={100}
+      rowMarkers={{ kind: "number", width: 64 }}
+      rowMarkerWidth={64}
+      theme={theme}
+      cellActivationBehavior="double-click"
       onCellEdited={commit}
       onColumnResize={onColumnResize}
       onVisibleRegionChanged={(range) => {
@@ -167,13 +225,19 @@ function Editor({ model }) {
         };
       }}
     />
+    {pagination && <div className="lumut-glide-pagination"><button disabled={page === 0} onClick={() => setPage(page - 1)} type="button">Previous</button><span>{page + 1} / {pageCount}</span><button disabled={page >= pageCount - 1} onClick={() => setPage(page + 1)} type="button">Next</button></div>}
   </div>;
 }
 
 const STYLE = `
-.lumut-glide { border: 1px solid #d7dce3; border-radius: 8px; overflow: hidden; }
-.lumut-glide-label { border-bottom: 1px solid #d7dce3; font: 600 13px/1.4 ui-sans-serif, system-ui, sans-serif; padding: 8px 12px; }
-@media (prefers-color-scheme: dark) { .lumut-glide { border-color: #30363d; } .lumut-glide-label { border-color: #30363d; } }
+${glideStyles}
+.lumut-glide { border: 1px solid #1f2937; border-radius: 8px; overflow: hidden; }
+.lumut-glide-label { border-bottom: 1px solid #1f2937; color: #111827; font: 600 18px/1.3 ui-sans-serif, system-ui, sans-serif; padding: 16px 24px; }
+.lumut-glide .gdg-wmyidgi { font: 16px/1.45 ui-sans-serif, system-ui, sans-serif; }
+.lumut-glide-pagination { border-top: 1px solid #e4e4e7; display: flex; gap: 8px; justify-content: flex-end; padding: 7px; }
+.lumut-glide-pagination button { background: transparent; border: 1px solid #d4d4d8; border-radius: 4px; color: inherit; cursor: pointer; font: inherit; padding: 3px 8px; }
+.lumut-glide-pagination button:disabled { cursor: not-allowed; opacity: .45; }
+@media (prefers-color-scheme: dark) { .lumut-glide { border-color: #d1d5db; } .lumut-glide-label { border-color: #d1d5db; color: #f3f4f6; } }
 `;
 
 function render({ model, el }) {
