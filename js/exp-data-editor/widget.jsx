@@ -70,9 +70,18 @@ function EditTextarea({ value, selectAll, style, onCommit, onCancel }) {
 
 function Editor({ model, overlayRoot }) {
   const editorRootRef = useRef(null);
-  const scrollRef = useRef(null);
+  const [scrollElement, setScrollElement] = useState(null);
   const rowElements = useRef(new Map());
-  const [rows, setRows] = useState(() => model.get("value") || model.get("data") || []);
+  const patchSequence = useRef(0);
+  const paginationMode = model.get("pagination_mode") || "none";
+  const isPaginated = paginationMode !== "none";
+  const [rows, setRows] = useState(() => {
+    const initial = (paginationMode === "client" || paginationMode === "none")
+      ? model.get("initial_rows")
+      : model.get("page_rows");
+    return (initial && initial.length ? initial : model.get("page_rows") || []).map((row) => ({ ...row }));
+  });
+  const [, setRevision] = useState(0);
   const [editing, setEditing] = useState(null);
   const [selection, setSelection] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -82,6 +91,7 @@ function Editor({ model, overlayRoot }) {
   const [menu, setMenu] = useState(null);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState("string");
+  const [columnDefaults, setColumnDefaults] = useState({});
   const editableColumns = model.get("editable_columns");
   const wrappedColumns = model.get("wrapped_columns");
   const wrapText = model.get("wrap_text");
@@ -89,45 +99,95 @@ function Editor({ model, overlayRoot }) {
   const fieldTypes = model.get("field_types") || {};
   const maxRowHeight = model.get("max_row_height");
   const estimatedRowHeight = model.get("estimated_row_height");
-  const pagination = model.get("pagination");
-  const pageSize = model.get("page_size");
+  const [pageSize, setPageSize] = useState(() => model.get("page_size"));
+  const [rowCount, setRowCount] = useState(() => model.get("row_count") || 0);
+  const pageSizeOptions = model.get("page_size_options") || [5, 10, 25, 50, 100];
+  const remoteUrl = model.get("remote_url");
+  const remotePatchUrl = model.get("remote_patch_url");
   const columnSizingMode = model.get("column_sizing_mode");
+  const editorHeight = model.get("height") || 450;
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const pageOffset = pagination ? page * pageSize : 0;
-  const displayRows = pagination ? rows.slice(pageOffset, pageOffset + pageSize) : rows;
+  const pageCount = Math.max(1, Math.ceil((isPaginated ? rowCount : rows.length) / pageSize));
+  const pageOffset = isPaginated ? page * pageSize : 0;
+  const displayRows = paginationMode === "client" ? rows.slice(pageOffset, pageOffset + pageSize) : rows;
 
   useEffect(() => {
     const sync = () => {
-      const nextRows = model.get("data") || [];
+      if (paginationMode !== "client" && paginationMode !== "none") return;
+      const nextRows = (model.get("initial_rows") || []).map((row) => ({ ...row }));
       setRows(nextRows);
       setColumnNames(Object.keys(nextRows[0] || {}));
       setPage(0);
       setSelection(null);
       setSelectedRows([]);
+      setColumnDefaults({});
+      setRowCount(nextRows.length);
     };
-    model.on("change:data", sync);
-    return () => model.off("change:data", sync);
-  }, [model]);
+    sync();
+    const syncFirstPage = () => {
+      if (rows.length === 0) setRows((model.get("page_rows") || []).map((row) => ({ ...row })));
+    };
+    syncFirstPage();
+    model.on("change:page_rows", syncFirstPage);
+    model.on("change:initial_rows", sync);
+    return () => {
+      model.off("change:page_rows", syncFirstPage);
+      model.off("change:initial_rows", sync);
+    };
+  }, [model, paginationMode, rows.length]);
 
   useEffect(() => {
     setPage((current) => Math.min(current, pageCount - 1));
   }, [pageCount]);
 
-  const [columnNames, setColumnNames] = useState(() => Object.keys(rows[0] || {}));
+  useEffect(() => {
+    if (paginationMode !== "server") return undefined;
+    const syncPage = () => setRows((model.get("page_rows") || []).map((row) => ({ ...row })));
+    syncPage();
+    model.on("change:page_rows", syncPage);
+    return () => model.off("change:page_rows", syncPage);
+  }, [model, paginationMode]);
+
+  useEffect(() => {
+    if (paginationMode !== "remote" || !remoteUrl) return undefined;
+    const controller = new AbortController();
+    const url = new URL(remoteUrl, window.location.href);
+    url.searchParams.set("offset", String(page * pageSize));
+    url.searchParams.set("limit", String(pageSize));
+    fetch(url, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("page request failed")))
+      .then((payload) => {
+        const nextRows = Array.isArray(payload) ? payload : payload.rows || [];
+        setRows(nextRows.map((row) => ({ ...row })));
+        if (!Array.isArray(payload) && Number.isInteger(payload.row_count)) setRowCount(payload.row_count);
+      })
+      .catch((error) => { if (error.name !== "AbortError") console.error(error); });
+    return () => controller.abort();
+  }, [page, pageSize, paginationMode, remoteUrl]);
+
+  const [columnNames, setColumnNames] = useState(() => Object.keys(rows[0] || {}).length ? Object.keys(rows[0]) : model.get("columns") || []);
+  const sendPatches = useCallback((patches) => {
+    const identified = patches.map((patch) => ({ ...patch, id: ++patchSequence.current }));
+    if (paginationMode === "remote") {
+      fetch(remotePatchUrl, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ patches: identified }),
+      }).catch((error) => console.error(error));
+      return;
+    }
+    model.set("patches", identified);
+    model.save_changes();
+  }, [model, paginationMode, remotePatchUrl]);
   const commit = useCallback((rowIndex, columnId, rawValue) => {
     const sourceIndex = rowIndex + pageOffset;
-    const next = rows.map((row, index) =>
-      index === sourceIndex
-        ? { ...row, [columnId]: coerce(rawValue, fieldTypes[columnId]) }
-        : row,
-    );
-    setRows(next);
+    const nextValue = coerce(rawValue, fieldTypes[columnId]);
+    rows[rowIndex][columnId] = nextValue;
     setEditing(null);
     setFocusTarget({ row: sourceIndex + 1, column: columnNames.indexOf(columnId), edit: false });
-    model.set("value", next);
-    model.save_changes();
-  }, [columnNames, fieldTypes, model, pageOffset, rows]);
+    sendPatches([{ op: "set", row: sourceIndex, column: columnId, value: nextValue }]);
+    setRevision((revision) => revision + 1);
+  }, [columnNames, fieldTypes, pageOffset, rows, sendPatches]);
 
   const openEdit = useCallback((rowIndex, columnId, element, draft) => {
     const cell = element?.getBoundingClientRect();
@@ -147,9 +207,7 @@ function Editor({ model, overlayRoot }) {
 
   const saveRows = useCallback((nextRows) => {
     setRows(nextRows);
-    model.set("value", nextRows);
-    model.save_changes();
-  }, [model]);
+  }, []);
 
   const addRow = useCallback(({ column = 0, draft, edit = false } = {}) => {
     const blank = Object.fromEntries(columnNames.map((column) => [
@@ -157,16 +215,18 @@ function Editor({ model, overlayRoot }) {
       fieldTypes[column] === "boolean" ? false : fieldTypes[column] === "number" || fieldTypes[column] === "integer" ? 0 : "",
     ]));
     saveRows([...rows, blank]);
+    sendPatches([{ op: "append", row: blank }]);
     setFocusTarget({ row: rows.length, column, draft, edit });
-  }, [columnNames, fieldTypes, rows, saveRows]);
+  }, [columnNames, fieldTypes, rows, saveRows, sendPatches]);
 
   const deleteSelectedRows = useCallback(() => {
     if (selectedRows.length === 0) return;
     const selected = new Set(selectedRows);
     saveRows(rows.filter((_, index) => !selected.has(index)));
+    sendPatches([...selectedRows].sort((left, right) => right - left).map((row) => ({ op: "delete", row })));
     setSelectedRows([]);
     setSelection(null);
-  }, [rows, saveRows, selectedRows]);
+  }, [rows, saveRows, selectedRows, sendPatches]);
 
   const addColumn = useCallback((side) => {
     const name = newColumnName.trim();
@@ -178,13 +238,13 @@ function Editor({ model, overlayRoot }) {
     setColumnNames(nextColumns);
     const defaultValue = newColumnType === "boolean" ? false
       : newColumnType === "number" || newColumnType === "integer" ? null : "";
-    saveRows(rows.map((row) => ({ ...row, [name]: defaultValue })));
     model.set("field_types", { ...fieldTypes, [name]: newColumnType });
-    model.save_changes();
+    setColumnDefaults((current) => ({ ...current, [name]: defaultValue }));
+    sendPatches([{ op: "add_column", name, default: defaultValue }]);
     setNewColumnName("");
     setNewColumnType("string");
     setMenu(null);
-  }, [columnNames, fieldTypes, menu, model, newColumnName, newColumnType, rows, saveRows]);
+  }, [columnNames, fieldTypes, menu, newColumnName, newColumnType, sendPatches]);
 
   const copyColumnName = useCallback(async (name) => {
     if (navigator.clipboard?.writeText) {
@@ -216,7 +276,7 @@ function Editor({ model, overlayRoot }) {
     maxSize: 600,
     enableResizing: true,
     cell: ({ getValue, row }) => {
-      const value = getValue();
+      const value = Object.hasOwn(row.original, column) ? row.original[column] : columnDefaults[column];
       const editable = isEditable(column, editableColumns);
       if (fieldTypes[column] === "boolean" && editable) {
         return <input
@@ -233,7 +293,7 @@ function Editor({ model, overlayRoot }) {
         {String(value ?? "")}
       </div>;
     },
-  })), [columnNames, columnSizingMode, commit, editableColumns, fieldTypes, openEdit, rows, wrapText, wrappedColumns]);
+  })), [columnDefaults, columnNames, columnSizingMode, commit, editableColumns, fieldTypes, openEdit, rows, wrapText, wrappedColumns]);
 
   const table = useReactTable({
     data: displayRows,
@@ -244,7 +304,7 @@ function Editor({ model, overlayRoot }) {
   const hasTrailingRow = true;
   const virtualizer = useVirtualizer({
     count: table.getRowModel().rows.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize: () => estimatedRowHeight,
     measureElement: (element) => autoRowHeight ? Math.min(
       maxRowHeight,
@@ -253,9 +313,20 @@ function Editor({ model, overlayRoot }) {
     overscan: 8,
   });
   const columnSizing = table.getState().columnSizing;
-  const measureRow = useCallback((element) => {
-    if (!element) return;
-    rowElements.current.set(Number(element.dataset.index), element);
+  const virtualItems = virtualizer.getVirtualItems();
+  const renderedItems = virtualItems.length > 0
+    ? virtualItems
+    : table.getRowModel().rows.slice(0, Math.min(pageSize, 100)).map((_, index) => ({
+      index,
+      start: index * estimatedRowHeight,
+    }));
+  const totalVirtualHeight = virtualizer.getTotalSize() || table.getRowModel().rows.length * estimatedRowHeight;
+  const measureRow = useCallback((index, element) => {
+    if (!element) {
+      rowElements.current.delete(index);
+      return;
+    }
+    rowElements.current.set(index, element);
     if (autoRowHeight) virtualizer.measureElement(element);
   }, [autoRowHeight, virtualizer]);
 
@@ -272,7 +343,7 @@ function Editor({ model, overlayRoot }) {
 
   useEffect(() => {
     if (!focusTarget) return undefined;
-    const targetPage = pagination ? Math.floor(focusTarget.row / pageSize) : 0;
+    const targetPage = isPaginated ? Math.floor(focusTarget.row / pageSize) : 0;
     if (targetPage !== page) {
       setPage(targetPage);
       return undefined;
@@ -290,7 +361,22 @@ function Editor({ model, overlayRoot }) {
       });
     });
     return () => cancelAnimationFrame(timer);
-  }, [columnNames, displayRows.length, focusTarget, openEdit, page, pageOffset, pageSize, pagination, virtualizer]);
+    }, [columnNames, displayRows.length, focusTarget, openEdit, page, pageOffset, pageSize, isPaginated, virtualizer]);
+
+  const requestPage = useCallback((nextPage, nextPageSize = pageSize) => {
+    const bounded = Math.max(0, Math.min(pageCount - 1, nextPage));
+    setPage(bounded);
+    if (paginationMode === "server") {
+      model.set("page_request", { id: ++patchSequence.current, page: bounded, page_size: nextPageSize });
+      model.save_changes();
+    }
+  }, [model, pageCount, pageSize, paginationMode]);
+
+  const changePageSize = useCallback((event) => {
+    const nextSize = Number(event.target.value);
+    setPageSize(nextSize);
+    requestPage(0, nextSize);
+  }, [requestPage]);
 
   const gridTemplateColumns = table.getVisibleLeafColumns()
     .map((column) => `${column.getSize()}px`)
@@ -323,7 +409,7 @@ function Editor({ model, overlayRoot }) {
   }, [columnNames.length, displayRows.length, hasTrailingRow, pageOffset, selection]);
 
   return <div className="lumut-editor" ref={editorRootRef} style={{
-    "--lumut-height": `${model.get("height")}px`,
+    "--lumut-height": `${editorHeight}px`,
     "--lumut-max-row-height": `${maxRowHeight}px`,
     width: model.get("width"),
   }}>
@@ -359,16 +445,16 @@ function Editor({ model, overlayRoot }) {
         </div>
       )))}
     </div>
-    <div className="lumut-scroll" ref={scrollRef}>
-      <div className="lumut-virtual-space" style={{ height: virtualizer.getTotalSize() }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => {
+    <div className="lumut-scroll" ref={setScrollElement}>
+      <div className="lumut-virtual-space" style={{ height: totalVirtualHeight }}>
+        {renderedItems.map((virtualRow) => {
           const row = table.getRowModel().rows[virtualRow.index];
           const sourceRow = row.index + pageOffset;
           return <div
             className="lumut-row"
             data-index={virtualRow.index}
             key={row.id}
-            ref={autoRowHeight ? measureRow : undefined}
+            ref={autoRowHeight ? (element) => measureRow(virtualRow.index, element) : undefined}
             style={{ gridTemplateColumns: fullGridTemplateColumns, transform: `translateY(${virtualRow.start}px)` }}
           >
             <div className="lumut-row-selector"><label><input checked={selectedRows.includes(row.index + pageOffset)} onChange={() => setSelectedRows((current) => current.includes(row.index + pageOffset) ? current.filter((index) => index !== row.index + pageOffset) : [...current, row.index + pageOffset])} type="checkbox" /><span>{row.index + pageOffset + 1}</span></label></div>
@@ -424,15 +510,15 @@ function Editor({ model, overlayRoot }) {
       onCommit={(nextValue) => commit(editing.rowIndex, editing.columnId, nextValue)}
       onCancel={() => setEditing(null)}
     />, overlayRoot)}
-    <div className="lumut-row-actions"><button className="lumut-delete-rows" disabled={selectedRows.length === 0} onClick={deleteSelectedRows} type="button">Delete row{selectedRows.length === 1 ? "" : "s"}</button>{pagination && <span className="lumut-pagination"><button disabled={page === 0} onClick={() => setPage(page - 1)} type="button">Previous</button><span>{page + 1} / {pageCount}</span><button disabled={page >= pageCount - 1} onClick={() => setPage(page + 1)} type="button">Next</button></span>}</div>
+    <div className="lumut-row-actions"><button className="lumut-delete-rows" disabled={selectedRows.length === 0} onClick={deleteSelectedRows} type="button">Delete row{selectedRows.length === 1 ? "" : "s"}</button>{isPaginated && <span className="lumut-pagination"><select aria-label="Rows per page" value={pageSize} onChange={changePageSize}>{pageSizeOptions.map((size) => <option key={size} value={size}>{size} / page</option>)}</select><button aria-label="First page" disabled={page === 0} onClick={() => requestPage(0)} type="button">«</button><button aria-label="Previous page" disabled={page === 0} onClick={() => requestPage(page - 1)} type="button">‹</button><span>Page <input aria-label="Page" min="1" max={pageCount} onChange={(event) => requestPage(Number(event.target.value) - 1)} type="number" value={page + 1} /> of {pageCount}</span><button aria-label="Next page" disabled={page >= pageCount - 1} onClick={() => requestPage(page + 1)} type="button">›</button><button aria-label="Last page" disabled={page >= pageCount - 1} onClick={() => requestPage(pageCount - 1)} type="button">»</button></span>}</div>
   </div>;
 }
 
 const STYLE = `
-.lumut-editor { --lumut-border: #e4e4e7; --lumut-bg: #fff; --lumut-fg: #27272a; --lumut-muted: #71717a; --lumut-hover: #fafafa; --lumut-accent: #6366f1; color: var(--lumut-fg); background: var(--lumut-bg); border: 1px solid var(--lumut-border); border-radius: 8px; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; overflow: visible; position: relative; }
+.lumut-editor { --lumut-border: var(--border, #e4e4e7); --lumut-bg: var(--background, #fff); --lumut-fg: var(--foreground, #27272a); --lumut-muted: var(--muted-foreground, #71717a); --lumut-hover: var(--muted, #fafafa); --lumut-accent: var(--primary, #6366f1); color: var(--lumut-fg); background: var(--lumut-bg); border: 1px solid var(--lumut-border); border-radius: 8px; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; overflow: visible; position: relative; }
 .lumut-label { padding: 12px 16px; border-bottom: 1px solid var(--lumut-border); font-size: 15px; font-weight: 600; }
 .lumut-header, .lumut-row, .lumut-frozen-new-row { display: grid; min-width: max-content; }
-.lumut-header { background: #fafafa; border-bottom: 1px solid var(--lumut-border); position: relative; z-index: 1; }
+.lumut-header { background: var(--muted, #fafafa); border-bottom: 1px solid var(--lumut-border); position: relative; z-index: 1; }
 .lumut-row-number-header, .lumut-row-selector { border-right: 1px solid var(--lumut-border); }
 .lumut-header-cell { border-right: 1px solid var(--lumut-border); color: #3f3f46; font-size: 14px; font-weight: 600; letter-spacing: 0; overflow: visible; padding: 11px 28px 11px 14px; position: relative; text-overflow: ellipsis; text-transform: none; white-space: nowrap; }
 .lumut-resizer { cursor: col-resize; height: 100%; position: absolute; right: 0; top: 0; touch-action: none; width: 10px; z-index: 2; }
@@ -454,7 +540,7 @@ const STYLE = `
 .lumut-virtual-space { min-width: max-content; position: relative; }
 .lumut-row { border-bottom: 1px solid var(--lumut-border); box-sizing: border-box; left: 0; max-height: var(--lumut-max-row-height); overflow: hidden; position: absolute; top: 0; width: 100%; }
 .lumut-row:hover { background: var(--lumut-hover); }
-.lumut-new-row { background: #fafafa; }
+.lumut-new-row { background: var(--muted, #fafafa); }
 .lumut-frozen-new-row { border-top: 1px solid var(--lumut-border); border-bottom: 1px solid var(--lumut-border); }
 .lumut-new-row-label { color: var(--lumut-muted); font-weight: 500; }
 .lumut-row-selector { align-items: center; display: flex; justify-content: center; min-height: 34px; }
@@ -476,7 +562,6 @@ const STYLE = `
 .lumut-row-actions button:disabled { cursor: not-allowed; opacity: .45; }
 .lumut-delete-rows { background: #ef4444 !important; border-color: #dc2626 !important; color: #fff !important; margin-left: auto; }
 .lumut-pagination { align-items: center; display: flex; gap: 6px; margin-left: auto; }
-@media (prefers-color-scheme: dark) { .lumut-editor { --lumut-border: #30363d; --lumut-bg: #161b22; --lumut-fg: #e6edf3; --lumut-muted: #8b949e; --lumut-hover: #21262d; } .lumut-header, .lumut-new-row { background: #1c2128; } .lumut-header-cell { color: #e6edf3; } .lumut-cell.is-selected { background: #27345f; box-shadow: inset 0 0 0 1px #8190ff; } .lumut-overlay-root { --lumut-bg: #161b22; --lumut-fg: #e6edf3; } .lumut-editor-textarea::selection { background: #3b4b82; color: #f8fafc; } }
 `;
 
 function render({ model, el }) {
